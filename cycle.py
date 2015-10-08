@@ -39,14 +39,24 @@ class Cycle:
 	def print_table(self):
 		print (self.table)
 
+	def get_col_data(self, background=[]):
+		data = []
+		time = []
+		if background == []:
+			background = [0] * len(self.table)
+		for row in range(len(self.table)):
+			time.append(float(self.table[row][3]))
+			data.append(float(self.table[row][4]) - background[row])
+		return (time, data)
+
 	def plot_attribute(self, num):
 		import matplotlib.pyplot as plt
 		data = []
 		time = []
 		for row in self.table:
-			time.append(float(row[2]))
+			time.append(float(row[3]))
 			data.append(float(row[num]))
 		plt.plot(time, data)
 		plt.ylabel(self.labels[num])
-		plt.xlabel(self.labels[2])
+		plt.xlabel(self.labels[3])
 		plt.show()

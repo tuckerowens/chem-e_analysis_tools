@@ -14,6 +14,20 @@ class DataSet:
 		files = sorted(files, key=lambda f: int(re.search("(?:#)(.*)(?=\.DTA)", f).group(1)))
 		self.data = list(map(lambda x: cycle.Cycle(x), files))
 
+	def plot_voltage(self, voltmin, voltmax, inc=1):
+		bg = self.getBackground()
+		voltages, im = self.data[0].get_col_data()
+		voltages = np.array(voltages)
+		print (voltages)
+		v_indexs = np.where(voltages >= voltmin and voltages <= voltmax)
+
+		for point in range(v_indexs[0], v_indexs[-1], inc):
+			time, data = self.data[point].get_col_data()
+			plt.plot(time, data[v_indexs])
+		plt.legend(points, loc='upper left')
+		plt.show()
+
+
 	def plot_point(self, attr):
 		bg = self.getBackground()
 		for line in attr:
@@ -26,6 +40,13 @@ class DataSet:
 			plt.plot(x, y)
 
 		plt.legend(attr, loc='upper left')
+		plt.show()
+
+	def plotVerticals(self, points):
+		for point in points:
+			time, data = self.data[point].get_col_data(self.getBackground())
+			plt.plot(time, data)
+		plt.legend(points, loc='upper left')
 		plt.show()
 
 	def getBackground(self, start=0, end=10):
