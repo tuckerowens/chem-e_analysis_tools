@@ -15,11 +15,11 @@ class DataSet:
 		self.data = list(map(lambda x: cycle.Cycle(x), files))
 
 	def plot_point(self, attr):
-
+		bg = self.getBackground()
 		for line in attr:
 			y = []
 			for cycle in self.data:
-				y.append(float(cycle.table[line][4]))
+				y.append(float(cycle.table[line][4]) - bg[line])
 
 			x = np.arange(0, len(y), 1)
 			y = np.array(y)
@@ -30,31 +30,28 @@ class DataSet:
 
 	def getBackground(self, start=0, end=10):
 		points = []
-		for cycle in self.data:
-			for i in range(start, end):
-				points.append(float(cycle.table[i][4]))
-		return sum(points) / len(points)
+		for point in range(len(self.data[0].table)):
+			s = 0
+			for cycle in range(start, end):
+				s += float(self.data[cycle].table[point][4])
+			points.append(s / (end - start))
+		return points
 
 	def plot_spectra(self, attr):
 		
 		bg =  self.getBackground()
-		print ("Background found to be: " + str(bg))
+		
 		z = []
 		for cycle in self.data:
 			col = []
-			for row in cycle.table:
-				col.append(float(row[attr]) - bg)
+			for row in range(len(cycle.table)):
+				col.append(float(cycle.table[row][attr]) - bg[row])
 			z.append(col)
 
 		y = list(map(lambda y: float(y[3]), self.data[0].table))
-		
 		X = np.arange(0, len(self.data), 1)
-		
 		Y = np.array(y)
-
 		X, Y = np.meshgrid(X, Y)
-
-
 		
 		Z = np.array(z)
 		Z = np.transpose(Z)
@@ -69,7 +66,7 @@ class DataSet:
 		# print (Z.min()) 
 
 		plt.subplot(1, 1, 1)
-		plt.pcolormesh(X, Y, Z)
+		plt.pcolormesh(X, Y, Z, vmin=Z.min(), vmax=0.8e-8)
 		plt.axis([X.min(), X.max(), Y.min(), Y.max()])
 
 		plt.colorbar()
