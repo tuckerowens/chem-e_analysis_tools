@@ -1,4 +1,4 @@
-import cycle, os, re
+import cycle, os, re, math
 from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ class DataSet:
 
 
 	def plot_point(self, attr):
-		bg = self.getBackground()
+		bg = [0]  * len(self.getBackground())
 		for line in attr:
 			y = []
 			for cycle in self.data:
@@ -42,9 +42,44 @@ class DataSet:
 		plt.legend(attr, loc='upper left')
 		plt.show()
 
+	def rms(self, values, width=5):
+		results = []
+		for p in range(width-1, len(values)):
+			s = 0
+			for i in range(width):
+				s += values[p-i]**2
+			results.append( math.sqrt( (1.0/width) * s ) )
+		return results 
+
+	def getRmsBackground(self, deltaThresh, width=5):
+		points = []
+		for point in range(len(self.data[0].table)):
+			sub_points = []
+			for cycle in range(len(self.data)):
+				sub_points.append(float(self.data[cycle].table[point][4]))
+			points.append(sub_points)
+
+		background = []
+		for point in range(len(points)):
+			err = self.rms(points[point], width)
+			print (err)
+			start = 0
+			for i in range(1, len(err)):
+				if abs(err[i] - err[i-1]) >= deltaThresh:
+					start = i-1
+					break
+			background.append( np.average(points[point][start::start+width]) )
+		return background
+
+
+
+
+
+
+
 	def plotVerticals(self, points):
 		for point in points:
-			time, data = self.data[point].get_col_data(self.getBackground())
+			time, data = self.data[point].get_col_data()
 			plt.plot(time, data)
 		plt.legend(points, loc='upper left')
 		plt.show()
@@ -60,7 +95,7 @@ class DataSet:
 
 	def plot_spectra(self, attr):
 		
-		bg =  self.getBackground()
+		bg =  self.getRmsBackground(2)
 		
 		z = []
 		for cycle in self.data:

@@ -11,11 +11,11 @@ if len(sys.argv) < 2:
 
 
 d = dataset.DataSet(sys.argv[1])
-# d.plot_spectra(4)
+d.plot_spectra(4)
 # d.data[30].plot_attribute(4)
-d.plotVerticals(range(20, 50, 10))
+# d.plotVerticals(range(0, 10, 2))
 # d.plot_voltage(-.25, .11, 1)
-# d.plot_point([500, 600, 700])
+# d.plot_point(range(0,30,5))
 
 # files = []
 
