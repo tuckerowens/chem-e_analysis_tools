@@ -64,15 +64,18 @@ class DataSet:
 
 		background = []
 		for point in range(len(points)):
-			print ("--------------------------------------------------")
 			err = self.rms(points[point], width, bg=bg[point])
-			print(err)
+			if point % 100 == 0:
+				x = np.arange(0, len(err), 1)
+				y = np.array(err)
+				plt.title("Point " + str(point))
+				plt.plot(x, y)
+				plt.show()
 			start = 0
 			for i in range(1, len(err)):
 				if abs(err[i] - err[i-1]) >= deltaThresh:
 					start = i-1
 					break
-			print("Using start: " + str(start))
 			background.append( np.average(points[point][start:start+width]) )
 		return background
 
@@ -83,9 +86,11 @@ class DataSet:
 
 
 	def plotVerticals(self, points):
+		bg = self.getBackground();
 		for point in points:
-			time, data = self.data[point].get_col_data()
-			plt.plot(time, data)
+			x, y = self.data[point].get_col_data()
+			y = list(map(lambda z: z-bg[point], y))
+			plt.plot(x, y)
 		plt.legend(points, loc='upper left')
 		plt.show()
 
@@ -127,6 +132,7 @@ class DataSet:
 		# Z = Z + -(Z.min()) + 1
 
 		# print (Z.min()) 
+
 
 		plt.subplot(1, 1, 1)
 		plt.pcolormesh(X, Y, Z, vmin=Z.min(), vmax=0.8e-8)
