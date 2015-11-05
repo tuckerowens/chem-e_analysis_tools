@@ -29,7 +29,7 @@ class DataSet:
 
 
 	def plot_point(self, attr):
-		bg = [0]  * len(self.getBackground())
+		bg = self.getBackground()
 		for line in attr:
 			y = []
 			for cycle in self.data:
@@ -42,16 +42,19 @@ class DataSet:
 		plt.legend(attr, loc='upper left')
 		plt.show()
 
-	def rms(self, values, width=5):
+	def rms(self, values, width=5, bg=0):
 		results = []
 		for p in range(width-1, len(values)):
 			s = 0
 			for i in range(width):
-				s += values[p-i]**2
+				s += (values[p-i] - bg)**2
 			results.append( math.sqrt( (1.0/width) * s ) )
 		return results 
 
 	def getRmsBackground(self, deltaThresh, width=5):
+
+		bg = self.getBackground(0, 5)
+
 		points = []
 		for point in range(len(self.data[0].table)):
 			sub_points = []
@@ -61,14 +64,16 @@ class DataSet:
 
 		background = []
 		for point in range(len(points)):
-			err = self.rms(points[point], width)
-			print (err)
+			print ("--------------------------------------------------")
+			err = self.rms(points[point], width, bg=bg[point])
+			print(err)
 			start = 0
 			for i in range(1, len(err)):
 				if abs(err[i] - err[i-1]) >= deltaThresh:
 					start = i-1
 					break
-			background.append( np.average(points[point][start::start+width]) )
+			print("Using start: " + str(start))
+			background.append( np.average(points[point][start:start+width]) )
 		return background
 
 
@@ -93,10 +98,12 @@ class DataSet:
 			points.append(s / (end - start))
 		return points
 
-	def plot_spectra(self, attr):
-		
-		bg =  self.getRmsBackground(2)
-		
+	def plot_spectra(self, rms=0):
+		if rms:
+			bg =  self.getRmsBackground(1E-8)
+		else:
+			bg = self.getBackground(0, 5)
+		attr = 4
 		z = []
 		for cycle in self.data:
 			col = []
