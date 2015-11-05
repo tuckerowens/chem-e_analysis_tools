@@ -65,12 +65,12 @@ class DataSet:
 		background = []
 		for point in range(len(points)):
 			err = self.rms(points[point], width, bg=bg[point])
-			if point % 100 == 0:
-				x = np.arange(0, len(err), 1)
-				y = np.array(err)
-				plt.title("Point " + str(point))
-				plt.plot(x, y)
-				plt.show()
+			# if point % 100 == 0:
+			# 	x = np.arange(0, len(err), 1)
+			# 	y = np.array(err)
+			# 	plt.title("Point " + str(point))
+			# 	plt.plot(x, y)
+			# 	plt.show()
 			start = 0
 			for i in range(1, len(err)):
 				if abs(err[i] - err[i-1]) >= deltaThresh:
