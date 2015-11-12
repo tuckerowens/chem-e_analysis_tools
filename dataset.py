@@ -1,4 +1,4 @@
-import cycle, os, re, math
+import cycle, os, re, math, sys
 from pylab import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,9 +51,8 @@ class DataSet:
 			results.append( math.sqrt( (1.0/width) * s ) )
 		return results 
 
-	def getRmsBackground(self, deltaThresh, width=5):
 
-		bg = self.getBackground(0, 5)
+	def getRmsBackground(self, width=5):
 
 		points = []
 		for point in range(len(self.data[0].table)):
@@ -62,27 +61,84 @@ class DataSet:
 				sub_points.append(float(self.data[cycle].table[point][4]))
 			points.append(sub_points)
 
+		snrMax = [[0, 0] for a in range(len(points))]
+
+		SNR_INDEX = 0
+		SNR_VALUE = 1
+
+		errors = []
+
+		for start in range(int((len(points[0]) - width))):
+			sys.stdout.write("RMS progress: %.2f%%   \r" % (((100 * start / (len(points[0]) - width)))) )
+			sys.stdout.flush()
+			bg = self.getBackground(start, start + width)
+			errs = []
+			for point in range(len(points)):
+				err = self.rms(points[point], width, bg=bg[point])
+				errs.append(err)
+				snr = max(err)/min(err)
+				# if point == 500:
+				# 	x = np.arange(0, len(err), 1)
+				# 	y = np.array(err)
+				# 	plt.plot(x, y)
+				# 	plt.show()
+				if snr > snrMax[point][SNR_VALUE]:
+					snrMax[point][SNR_VALUE] =  snr
+					snrMax[point][SNR_INDEX] = start
+			errors.append(errs)
+		
+		print ("Error data: ")
+	
+		X = np.arange(0, len(errors ), 1)
+		Y = np.array(range(len(errors[0])))
+		X, Y = np.meshgrid(X, Y)
+
+		print (X)
+		print ("********************************")
+		print (Y)
+		
+		Z = np.array(errors)
+		
+	
+		z_min, z_max = Z.min(), np.abs(Z).max()
+
+
+		plt.subplot(1, 1, 1)
+		plt.pcolormesh(X, Y, Z, vmin=Z.min(), vmax=Z.max())
+		plt.axis([X.min(), X.max(), Y.min(), Y.max()])
+
+		plt.colorbar()
+		plt.show()
+
+
 		background = []
-		for point in range(len(points)):
-			err = self.rms(points[point], width, bg=bg[point])
-			# if point % 100 == 0:
-			# 	x = np.arange(0, len(err), 1)
-			# 	y = np.array(err)
-			# 	plt.title("Point " + str(point))
-			# 	plt.plot(x, y)
-			# 	plt.show()
-			start = 0
-			for i in range(1, len(err)):
-				if abs(err[i] - err[i-1]) >= deltaThresh:
-					start = i-1
-					break
-			background.append( np.average(points[point][start:start+width]) )
+		maxSNR = []
+		indexes = []
+		for i in range(len(snrMax)):
+			# print( "Selected Range for point " + str(i) + " is " + str(snrMax[i][SNR_INDEX]) + " - " + str(snrMax[i][SNR_INDEX] + width) + " -> " + str(snrMax[i][SNR_VALUE])) 
+			# print("Background is " + str(self.getBackground(snrMax[i][SNR_INDEX], snrMax[i][SNR_INDEX] + width)[i])) 
+			if i % 100 == 0:
+				x = np.arange(0, len(self.rms(points[i], width, bg=self.getBackground(snrMax[i][SNR_INDEX], snrMax[i][SNR_INDEX] + width)[i])), 1)
+				y = np.array(self.rms(points[i], width, bg=self.getBackground(snrMax[i][SNR_INDEX], snrMax[i][SNR_INDEX] + width)[i]))
+				plt.plot(x, y)
+				plt.ylabel("Point %i - snr %2.2f - Range %i" % (i, snrMax[i][SNR_VALUE], snrMax[i][SNR_INDEX]))
+				plt.show()
+
+			indexes.append( snrMax[i][SNR_INDEX] )
+			maxSNR.append( snrMax[i][SNR_VALUE] )
+
+			background.append( self.getBackground(snrMax[i][SNR_INDEX], snrMax[i][SNR_INDEX] + width)[i] )
+
+		x = np.arange(0, len(maxSNR), 1)
+		y = np.array(maxSNR)
+		plt.plot(x, y)
+		plt.show()
+
+		x = np.arange(0, len(indexes), 1)
+		y = np.array(indexes)
+		plt.plot(x, y)
+		plt.show()
 		return background
-
-
-
-
-
 
 
 	def plotVerticals(self, points):
@@ -103,13 +159,32 @@ class DataSet:
 			points.append(s / (end - start))
 		return points
 
+	def getBackgroundByFile(self, start=0, end=10):
+		points = []
+		for cycle in range(len(self.data)):
+			s = 0
+			for point in range(start, end):
+				s += float(self.data[cycle].table[point][4])
+			points.append(s / (end - start))
+		return points
+
+
+
 	def plot_spectra(self, rms=0):
 		if rms:
-			bg =  self.getRmsBackground(1E-8)
+			bg =  self.getRmsBackground()
 		else:
 			bg = self.getBackground(0, 5)
+		# bg = [0] * len(self.getBackground(0, 5))
+		x = np.arange(0, len(bg), 1)
+		y = np.array(bg)
+		plt.plot(x, y)
+		plt.show()
+
 		attr = 4
 		z = []
+
+
 		for cycle in self.data:
 			col = []
 			for row in range(len(cycle.table)):
@@ -118,7 +193,7 @@ class DataSet:
 
 		y = list(map(lambda y: float(y[3]), self.data[0].table))
 		X = np.arange(0, len(self.data), 1)
-		Y = np.array(y)
+		Y = np.array(range(1, len(y)+1))
 		X, Y = np.meshgrid(X, Y)
 		
 		Z = np.array(z)
@@ -132,6 +207,11 @@ class DataSet:
 		# Z = Z + -(Z.min()) + 1
 
 		# print (Z.min()) 
+
+
+		print (X)
+		print ("********************************")
+		print (Y)
 
 
 		plt.subplot(1, 1, 1)

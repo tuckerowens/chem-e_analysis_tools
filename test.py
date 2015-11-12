@@ -17,8 +17,8 @@ d = dataset.DataSet(sys.argv[1])
 # d.data[30].plot_attribute(4)
 
 
-d.plotVerticals(range(0, 10, 2))
+# d.plotVerticals(range(0, 10, 2))
 
 # d.plot_voltage(-.25, .11, 1)
 
-# d.plot_point(range(0,30,5))
+d.plot_point(range(0,1600,100))
